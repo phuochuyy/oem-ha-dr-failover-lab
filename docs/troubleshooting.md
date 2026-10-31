@@ -71,6 +71,29 @@ Switchover vẫn hoàn tất, nhưng primary cũ bị để ở trạng thái t�
 (`dgmgrl /@prm1`): Broker coi đó là xác thực ngoài nên không dùng để khởi động instance từ xa.
 Cách xử lý: switchover bằng `dgmgrl sys/<password>@db` (`switchover.sh`). Nếu đã lỡ, `startup` instance đó bằng tay.
 
+## EM: "Data Guard Internal Error" khi bấm Switchover
+
+Trên giao diện chỉ hiện `Data Guard Internal Error : Refer to the Management Server Logs for more information`.
+Trong `gc_inst/em/EMGC_OMS1/sysman/log/emoms.trc` có:
+
+```
+ERROR em.dataguard onEvent.2159 - java.lang.NullPointerException
+    at oracle.sysman.db.dg.SwitchoverBean.preChecks(SwitchoverBean.java:1346)
+```
+
+Xem bytecode bằng `javap` (`guest/em/inspect_dg_precheck.sh`) thì thấy bước pre-check đọc thuộc tính Broker
+**`DbDisplayName`** của primary và standby, rồi so sánh với tên target EM mà không kiểm tra null. Khi cấu hình
+Data Guard được tạo bằng wizard của EM, EM tự điền thuộc tính này. Cấu hình tạo bằng DGMGRL thì để trống (`''`).
+
+Cách xử lý (`guest/em/set_dg_display_names.sh`, chạy ở cuối `04-enable-fsfo.ps1`):
+
+```
+DGMGRL> edit database prm1 set property DbDisplayName='orcl_prm1';
+DGMGRL> edit database stb1 set property DbDisplayName='orcl_stb1';
+```
+
+Giá trị phải **trùng tên target database trong EM**.
+
 ## PowerShell 5.1 → ssh
 
 - Dấu `"` trong tham số truyền cho `ssh.exe` bị PowerShell 5.1 nuốt mất, ví dụ `"_allow_insert_with_update_check"`

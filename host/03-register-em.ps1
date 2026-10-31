@@ -11,3 +11,4 @@ foreach ($n in 'prm1', 'stb1') {
 Write-LabStep 'Database + listener targets'
 Invoke-LabScript oem24 -Script 'em\add_dg_targets.sh'
 Invoke-LabScript oem24 -Script 'em\check_dg.sh'
+# Broker DbDisplayName -> EM target names is set at the end of 04-enable-fsfo.ps1 (needs the observer wallet).

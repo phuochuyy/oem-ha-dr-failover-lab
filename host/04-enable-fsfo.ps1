@@ -24,3 +24,6 @@ Invoke-LabScript oem24 -Script 'dataguard\observer_setup.sh'
 Invoke-LabScript oem24 -User root -Script 'dataguard\observer_service_root.sh'
 Start-Sleep 30
 Invoke-LabScript oem24 -Script 'dataguard\dg_status.sh'
+
+Write-LabStep 'Broker DbDisplayName = EM target names (needed for role changes from the EM UI)'
+Invoke-LabScript oem24 -Script 'em\set_dg_display_names.sh'
