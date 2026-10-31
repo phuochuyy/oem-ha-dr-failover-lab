@@ -1,0 +1,27 @@
+# tnsnames.ora for prm1, stb1 and the FSFO observer on oem24
+
+# Instance-specific aliases (broker DGConnectIdentifier, RMAN, observer)
+PRM1 =
+  (DESCRIPTION = (ADDRESS = (PROTOCOL = TCP)(HOST = prm1.localdomain)(PORT = 1521))
+    (CONNECT_DATA = (SERVER = DEDICATED)(SERVICE_NAME = prm1.localdomain)(UR = A)))
+
+STB1 =
+  (DESCRIPTION = (ADDRESS = (PROTOCOL = TCP)(HOST = stb1.localdomain)(PORT = 1521))
+    (CONNECT_DATA = (SERVER = DEDICATED)(SERVICE_NAME = stb1.localdomain)(UR = A)))
+
+# Application aliases: role-based services, valid whichever node is primary
+ORCLPDB_RW =
+  (DESCRIPTION =
+    (CONNECT_TIMEOUT = 5)(TRANSPORT_CONNECT_TIMEOUT = 3)(RETRY_COUNT = 3)
+    (ADDRESS_LIST = (LOAD_BALANCE = OFF)(FAILOVER = ON)
+      (ADDRESS = (PROTOCOL = TCP)(HOST = prm1.localdomain)(PORT = 1521))
+      (ADDRESS = (PROTOCOL = TCP)(HOST = stb1.localdomain)(PORT = 1521)))
+    (CONNECT_DATA = (SERVICE_NAME = orclpdb_rw.localdomain)))
+
+ORCLPDB_RO =
+  (DESCRIPTION =
+    (CONNECT_TIMEOUT = 5)(TRANSPORT_CONNECT_TIMEOUT = 3)(RETRY_COUNT = 3)
+    (ADDRESS_LIST = (LOAD_BALANCE = OFF)(FAILOVER = ON)
+      (ADDRESS = (PROTOCOL = TCP)(HOST = stb1.localdomain)(PORT = 1521))
+      (ADDRESS = (PROTOCOL = TCP)(HOST = prm1.localdomain)(PORT = 1521)))
+    (CONNECT_DATA = (SERVICE_NAME = orclpdb_ro.localdomain)))

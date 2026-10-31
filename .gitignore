@@ -1,0 +1,11 @@
+# Real lab configuration (passwords) - never commit
+config/lab.env
+
+# Installers, ISOs, VM disks, generated files
+*.iso
+*.zip
+*.vdi
+*.vbox
+*.vbox-prev
+*.log
+out/
