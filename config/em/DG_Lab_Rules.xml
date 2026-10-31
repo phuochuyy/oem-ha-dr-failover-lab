@@ -6,6 +6,8 @@
   Each <EventClassSpecificAttributeGroup> is one "specific metric alert" (or availability state) as selected
   in the console; <EventClass> is the rule's event Type. Inside a group, class-specific attribute names are
   written "<attribute>|<event class>" (e.g. metric_group|metric_alert); sys_target_type stays plain.
+  sys_severity uses the event-model codes (EM_EVENT_ATTR_ENUM): 8 = WARNING, 16 = CRITICAL, 32 = FATAL,
+  0 = CLEAR - not the old alert codes 20/25 from MGMT_GLOBAL, which never match.
   Without <EventClass> the console cannot edit the rule (Type greyed out, "please select type").
 -->
 <RuleSet xmlns="http://www.oracle.com/EnterpriseManager/Incident/Rules" isEnabled="true" isGlobalCompressionEnabled="false" isOOB="false" EMVersion="24.1.0.0.0">
@@ -25,8 +27,8 @@
          <AttrName>sys_event_class</AttrName>
       </AttributeForRule>
       <AttributeForRule>
-         <AttrValue>20</AttrValue>
-         <AttrValue>25</AttrValue>
+         <AttrValue>8</AttrValue>
+         <AttrValue>16</AttrValue>
          <OperatorCode>IN</OperatorCode>
          <Type>SYSTEM_ATTRIBUTE</Type>
          <AttrName>sys_severity</AttrName>
@@ -133,7 +135,6 @@
          </RuleAdvNotification>
       </RuleCondAction>
    </Rule>
-
    <SourceObjectSpecificAttributeGroup>
       <SourceObjectSpecificAttribute>
          <AttrName>sys_target_guid</AttrName>

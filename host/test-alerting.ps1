@@ -23,7 +23,7 @@ do {
 $s
 
 Write-LabStep "Restart redo apply on $Standby"
-Invoke-LabSsh oem24 -Command 'pkill -f /tmp/gen_redo.sh; true' | Out-Null
+Invoke-LabSsh oem24 -Command 'pkill -f [g]en_redo.sh; true' | Out-Null   # [g] so pkill does not match this ssh command itself
 Invoke-LabScript oem24 -Script 'dataguard\apply_state.sh' -Arguments $Standby, 'APPLY-ON'
 Start-Sleep 150
 Write-LabStep 'After apply restart'

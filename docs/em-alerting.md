@@ -2,62 +2,70 @@
 
 ```powershell
 .\host\05-em-alerting.ps1     # script thông báo + ngưỡng + phương thức thông báo + import rule set
-.\host\test-alerting.ps1      # tắt apply trên standby ~8 phút, theo dõi cảnh báo/incident/thông báo, bật lại
+.\host\test-alerting.ps1      # tắt apply trên standby, chờ cảnh báo → incident → thông báo, rồi bật lại
 ```
 
 ## Thành phần
 
-| Thành phần | Cấu hình | Cách tạo | Trạng thái |
+| Thành phần | Cấu hình | Cách tạo |
+|---|---|---|
+| Ngưỡng | *Data Guard Performance*: Apply Lag, Transport Lag; Warning 30 s / Critical 60 s | `emcli modify_threshold` |
+| Lịch thu thập | collection `dataguard_11gR2` mỗi 1 phút (mặc định 5 phút) | `emcli modify_collection_schedule -force` |
+| Phương thức thông báo | OS Command `DG_LAB_LOG` → `/u01/app/oracle/em_notify/dg_event_log.sh` | API của trang *Scripts and SNMP Traps* (`EMD_NOTIFICATION.ADD_PROGRAM_DEVICE`); không có emcli |
+| Rule set | `DG Lab Rules` cho `orcl_prm1`, `orcl_stb1` | `emcli import_incident_rule_set` từ [config/em/DG_Lab_Rules.xml](../config/em/DG_Lab_Rules.xml) |
+| Rule 1 | **DG metric alerts**: Apply Lag, Transport Lag, Data Guard Status; mức Warning/Critical → incident + `DG_LAB_LOG` | trong XML |
+| Rule 2 | **DG target down**: database ngừng hoạt động → incident + `DG_LAB_LOG` | trong XML |
+
+`dg_event_log.sh` ghi mỗi thông báo thành một dòng trong `/u01/app/oracle/em_notify/events.log`; biến môi trường
+EM truyền vào được lưu ở `events/<thời điểm>.env`.
+
+## Kết quả
+
+Diễn tập 2026-10-31 19:33 (tắt apply trên stb1). Ghi chú của event trong EM:
+
+```
+Incident created by rule (Name= DG Lab Rules, DG metric alerts; Owner=SYSMAN).
+The following notifications will be sent:  1 os command(s)
+Called DG_LAB_LOG:/u01/app/oracle/em_notify/dg_event_log.sh (Rule Owner=SYSMAN, Rule Name=DG Lab Rules,DG metric alerts). Command exited with code=0
+```
+
+`events.log`:
+
+```
+2026-10-31 19:33:57 | Warning  | orcl_stb1  | Metric Alert | The standby database is approximately 46 seconds behind the primary database. | incident=...
+```
+
+Incident tự đóng khi lag về 0 (Clear lúc 19:35).
+
+Diễn tập đầy đủ bằng `test-alerting.ps1` với ngưỡng chuẩn 30/60 (19:37–19:41):
+
+| Thời điểm | Cảnh báo | Incident | `events.log` |
 |---|---|---|---|
-| Ngưỡng | *Data Guard Performance*: Apply Lag và Transport Lag, Warning 30 s / Critical 60 s | `emcli modify_threshold` | ✅ đã kiểm chứng |
-| Lịch thu thập | collection `dataguard_11gR2` mỗi 1 phút (mặc định 5 phút) | `emcli modify_collection_schedule -force` | ✅ |
-| Incident | Cảnh báo Critical → incident, tự đóng khi lag về 0 | rule mặc định của Oracle `METRIC_ALERT_INCIDENT_CREATION` | ✅ |
-| Phương thức thông báo | OS Command `DG_LAB_LOG` → `/u01/app/oracle/em_notify/dg_event_log.sh` | API của trang *Scripts and SNMP Traps* (`EMD_NOTIFICATION.ADD_PROGRAM_DEVICE`) | đã tạo |
-| Rule set | `DG Lab Rules` (Enterprise) cho `orcl_prm1`, `orcl_stb1`: rule *DG metric alerts* (Apply Lag, Transport Lag, Data Guard Status; Warning/Critical) và *DG target down* → incident + `DG_LAB_LOG` | `emcli import_incident_rule_set` từ [config/em/DG_Lab_Rules.xml](../config/em/DG_Lab_Rules.xml) | ⚠️ import sạch, sửa được trên giao diện, **chưa khớp event** |
+| 19:38:32 | Warning (41 s) | #200 tạo bởi `DG Lab Rules` | `Warning \| orcl_stb1` |
+| 19:39:32 | Critical (101 s) | #200 nâng lên Critical | `Critical \| orcl_stb1` |
+| 19:40:32 | Clear | #200 tự đóng | (không gửi khi Clear) |
 
-## Kết quả diễn tập (2026-10-31, tắt apply trên stb1)
+## Định dạng XML (khi cần sửa tay)
 
-| Lượt | Warning | Critical | Incident | Clear | Thông báo `DG_LAB_LOG` |
-|---|---|---|---|---|---|
-| 1 | 17:25 (39 s) | 17:26 (98 s) | #170 | 17:35 | — (rule set lúc đó dựng bằng PL/SQL, không dùng nữa) |
-| 2 | 17:38 (31 s) | 17:39 (91 s) | #171 | 17:46 | — |
-| 3 | — | 17:59 (89 s) | #175 | 18:06 | không (rule set đã import) |
-| 4 | 18:16 (59 s) | 18:17 (119 s) | #187 | 18:24 | không (sau khi khởi động lại OMS) |
-| 5 | — | 19:06 (74 s) | #195 | — | không (XML đầy đủ: `<EventClass>` + metric cụ thể) |
-
-Mọi incident đều do rule mặc định của Oracle tạo. `DG Lab Rules` không có ghi chú nào trên event, và hàng đợi
-thông báo (`EM_NOTIFY_Q`, `MGMT_NOTIFY_LOG`) trống.
-
-## Định dạng XML
-
-File được viết theo đúng định dạng mà `export_incident_rule_set` sinh ra (đọc từ các class JAXB của OMS):
+File theo đúng định dạng `export_incident_rule_set` của EM 24.1:
 
 - Mỗi rule cần `<EventClass>` (`metric_alert`, `target_availability`). Thiếu phần tử này thì giao diện không sửa được
   rule (ô *Type* bị khóa, báo "please select type").
-- Mỗi metric cụ thể là một `<EventClassSpecificAttributeGroup>`. Bên trong, tên thuộc tính phải có dạng
-  `<thuộc tính>|<event class>` (`metric_group|metric_alert`, `metric_column|metric_alert`,
-  `avail_severity|target_availability`); riêng `sys_target_type` giữ nguyên. Viết sai thì import báo
-  `JBO-27014: Attribute AttrId ... is required`.
-
-## Việc còn mở
-
-Rule set import sạch và đã được biên dịch đúng điều kiện, nhưng qua 5 lượt diễn tập vẫn không có event nào khớp
-`DG Lab Rules` (không có ghi chú của rule set trên event, hàng đợi thông báo trống), kể cả sau khi khởi động lại OMS.
-Chưa tìm ra nguyên nhân. Hướng kiểm tra tiếp:
-
-1. Mở rule set trên giao diện (Setup → Incidents → Incident Rules → `DG Lab Rules` → Edit) và **Save** một lần.
-2. Tạo thử một rule set nhỏ hoàn toàn trên giao diện, chạy `test-alerting.ps1`, so sánh với bản import.
-3. Gửi thử thông báo bằng nút **Test** của `DG_LAB_LOG` trong *Scripts and SNMP Traps* để loại trừ phía phương thức
-   thông báo.
-
-Thành công khi `events.log` có dòng `| Critical | orcl_stb1 |`.
+- Mỗi metric cụ thể là một `<EventClassSpecificAttributeGroup>`; tên thuộc tính trong nhóm có dạng
+  `<thuộc tính>|<event class>` (`metric_group|metric_alert`, `metric_column|metric_alert`); `sys_target_type` giữ
+  nguyên. Sai tên → `JBO-27014: Attribute AttrId ... is required`.
+- **`sys_severity` dùng mã của mô hình event**: `8` = WARNING, `16` = CRITICAL, `32` = FATAL, `0` = CLEAR
+  (bảng `EM_EVENT_ATTR_ENUM`). Mã cảnh báo kiểu cũ `20`/`25` (`MGMT_GLOBAL.G_SEVERITY_*`) vẫn import và biên dịch được
+  nhưng **không bao giờ khớp event**: rule im lặng, không lỗi gì.
+- Cách an toàn nhất để thay đổi: sửa trên giao diện (Setup → Incidents → Incident Rules) rồi
+  `emcli export_incident_rule_set` ghi đè file này.
 
 ## Giới hạn: metric độ trễ chỉ có trên target từng là standby
 
 EM gán bộ metric Data Guard theo vai trò của database **lúc được discover**. `orcl_stb1` có *Data Guard Performance*
 (`dataguard_sperf_112`); `orcl_prm1` (discover khi là primary) chỉ có `dataguard` (Data Guard Status) và
-`dataguard_pperf`. Khi prm1 làm standby, EM không cảnh báo được apply lag của nó. Script ngưỡng tự bỏ qua target
-chưa có metric; rediscover prm1 khi nó đang là standby sẽ khắc phục được.
+`dataguard_pperf`. Khi prm1 làm standby, EM không cảnh báo được apply lag của nó (rule *Data Guard Status* vẫn chạy).
+Script ngưỡng tự bỏ qua target chưa có metric; rediscover prm1 khi nó đang là standby sẽ khắc phục được.
 
 ## Kiểm tra nhanh
 
@@ -67,3 +75,5 @@ Invoke-LabScript oem24 -Script 'em\alert_status.sh' -Arguments 30   # incident, 
 ```
 
 `MGMT$INCIDENTS` và `MGMT$EVENTS` lưu giờ theo **UTC**; `alert_status.sh` đã quy đổi về giờ Việt Nam.
+Ghi chú trên event (`MGMT$EVENT_ANNOTATION`, join theo `EVENT_SEQ_ID`) cho biết rule nào đã khớp và thông báo nào
+đã được gửi — đây là chỗ nhìn đầu tiên khi rule "không chạy".

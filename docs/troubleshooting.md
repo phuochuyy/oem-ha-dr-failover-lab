@@ -94,15 +94,24 @@ DGMGRL> edit database stb1 set property DbDisplayName='orcl_stb1';
 
 Giá trị phải **trùng tên target database trong EM**.
 
-## EM: incident rule set tạo ngoài giao diện không chạy
+## EM: incident rule set không khớp event (im lặng, không báo lỗi)
 
-- Rule set tạo bằng API PL/SQL của repository (`EM_INCIDENT_RULES`) không khớp event: thiếu phần biên dịch của
-  tầng Java, dễ thành loại *Personal*, và điều kiện lưu khác với giao diện. **Đừng dùng cách này.**
-- Cách chuẩn: tạo rule set trên giao diện → `emcli export_incident_rule_set` → lưu XML →
-  `emcli import_incident_rule_set` (+ `modify_incident_rule -action=enable`).
-- Rule set mới import vào ở trạng thái disabled; emcli nhắc *"Review it and enable before saving"*. Trong lab, rule set
-  import rồi enable bằng emcli vẫn chưa khớp event; xem bước lưu trên giao diện trong [em-alerting.md](em-alerting.md).
-- `-overwrite_existing_ruleset` lên một rule set lỗi báo `JBO-25028 ... Overflow Exception`: xóa rule set đó trước.
+Triệu chứng: rule set đang bật, đã biên dịch, nhưng event thỏa điều kiện không có ghi chú nào của rule set,
+không incident, không thông báo. Nguyên nhân đã gặp, theo thứ tự:
+
+1. **Mã mức độ sai.** `sys_severity` trong mô hình event dùng `8` = WARNING, `16` = CRITICAL, `32` = FATAL
+   (`EM_EVENT_ATTR_ENUM`), không phải `20`/`25` của bảng cảnh báo cũ (`MGMT_GLOBAL.G_SEVERITY_*`). Điều kiện sai mã
+   vẫn biên dịch bình thường nhưng luôn sai.
+2. Rule set dựng bằng API PL/SQL (`EM_INCIDENT_RULES`): dễ thành loại *Personal*, thiếu `<EventClass>` nên giao diện
+   không sửa được. **Đừng dùng cách này**; dùng giao diện hoặc XML + `emcli import_incident_rule_set`.
+3. Rule set mới import vào ở trạng thái disabled → `emcli modify_incident_rule -action=enable`.
+
+Cách chẩn đoán nhanh nhất: đặt tạm ngưỡng chỉ có Warning (rule mặc định của Oracle chỉ tạo incident cho Critical),
+gây một cảnh báo, rồi đọc `MGMT$EVENT_ANNOTATION` của event đó: có dòng *"Incident created by rule (Name= ...)"* và
+*"Called DG_LAB_LOG ..."* thì rule đã khớp.
+
+`-overwrite_existing_ruleset` lên một rule set dựng sai cấu trúc báo `JBO-25028 ... Overflow Exception`: xóa rule set đó
+trước (`EM_INCIDENT_RULES.DELETE_RULE_SET`) rồi import lại.
 
 ## EM: truy vấn incident/event "không thấy gì"
 
