@@ -1,7 +1,6 @@
 # Build the OEM 24.1 VM from scratch: OL9 (network install), 26ai repository DB, EM 24.1 silent install.
 # Takes ~2 h. Needs ~80 GB free on the VM disk's drive while installing (fstrim brings the VDI back to ~50 GB).
 Import-Module (Join-Path $PSScriptRoot 'lab.psm1') -Force
-$ErrorActionPreference = 'Stop'
 $cfg = Get-LabConfig
 $vm = 'OEM24'
 $dir = Join-Path $cfg.LAB_VM_DIR $vm

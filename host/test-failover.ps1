@@ -3,7 +3,6 @@
 # re-open it as Active Data Guard and (optionally) switch roles back.
 param([switch]$SwitchBack)
 Import-Module (Join-Path $PSScriptRoot 'lab.psm1') -Force
-$ErrorActionPreference = 'Stop'
 
 function Get-Primary {
     $s = (Invoke-LabScript oem24 -Script 'dataguard\dg_status.sh') -join "`n"
@@ -20,7 +19,7 @@ Invoke-LabScript oem24 -Script 'dataguard\app_probe.sh' -Arguments "before failo
 
 Write-LabStep "Crash: hard power-off $P"
 $t0 = Get-Date
-VBoxManage controlvm $P poweroff 2>$null
+$null = VBoxManage controlvm $P poweroff 2>&1   # progress goes to stderr; must not abort the drill
 do {
     Start-Sleep 10
     $now = Get-Primary
@@ -39,7 +38,8 @@ $t1 = Get-Date
 do {
     Start-Sleep 20
     $s = (Invoke-LabScript oem24 -Script 'dataguard\dg_status.sh') -join "`n"
-    $ok = $s -match "(?m)^\s*$P - Physical standby database\s*$" -and $s -match '(?m)^SUCCESS'
+    # "(*)" marks the FSFO target; a member waiting for reinstate shows "(disabled)" + ORA-16661
+    $ok = $s -match "(?m)^\s*$P - (\(\*\) )?Physical standby database\s*$" -and $s -match '(?m)^SUCCESS'
     '{0,4:N0}s reinstated={1}' -f ((Get-Date) - $t1).TotalSeconds, $ok
 } until ($ok -or ((Get-Date) - $t1).TotalMinutes -gt 15)
 $s
@@ -56,5 +56,11 @@ if ($SwitchBack) {
 }
 
 Write-LabStep 'After: status + application probe'
-Invoke-LabScript oem24 -Script 'dataguard\dg_status.sh'
+# right after a switchover / apply restart the broker briefly reports ORA-16869 / ORA-16810; wait one health cycle
+$t2 = Get-Date
+do {
+    Start-Sleep 20
+    $s = (Invoke-LabScript oem24 -Script 'dataguard\dg_status.sh') -join "`n"
+} until ($s -match '(?m)^SUCCESS' -or ((Get-Date) - $t2).TotalMinutes -gt 5)
+$s
 Invoke-LabScript oem24 -Script 'dataguard\app_probe.sh' -Arguments 'after drill'

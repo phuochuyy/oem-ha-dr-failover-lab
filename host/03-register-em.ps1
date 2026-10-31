@@ -1,6 +1,5 @@
 # Deploy EM agents to prm1/stb1 and register their databases and listeners as targets.
 Import-Module (Join-Path $PSScriptRoot 'lab.psm1') -Force
-$ErrorActionPreference = 'Stop'
 
 Write-LabStep 'Agents (emcli submit_add_host)'
 Initialize-LabNodeEnv oem24

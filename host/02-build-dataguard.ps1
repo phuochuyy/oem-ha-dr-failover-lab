@@ -1,7 +1,6 @@
 # Build prm1 (primary) and stb1 (Active Data Guard standby, linked clone of prm1) with Data Guard Broker.
 # Requires host\01-build-oem24.ps1 (NAT network oemnet, boot ISO, SSH key). Takes ~45 min.
 Import-Module (Join-Path $PSScriptRoot 'lab.psm1') -Force
-$ErrorActionPreference = 'Stop'
 $cfg = Get-LabConfig
 $iso = Join-Path $cfg.LAB_ISO_DIR (Split-Path $cfg.OL_BOOT_ISO_URL -Leaf)
 $tns = Join-Path $RepoRoot 'guest\dataguard\dg_tnsnames.ora'

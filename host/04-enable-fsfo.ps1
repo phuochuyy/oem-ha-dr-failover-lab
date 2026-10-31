@@ -1,7 +1,6 @@
 # Fast-Start Failover: role-based services, tnsnames, MaxAvailability + FSFO, observer on oem24 (systemd).
 # Idempotent; run with all three VMs up and prm1 as primary.
 Import-Module (Join-Path $PSScriptRoot 'lab.psm1') -Force
-$ErrorActionPreference = 'Stop'
 $tns = Join-Path $RepoRoot 'guest\dataguard\dg_tnsnames.ora'
 
 foreach ($n in 'oem24', 'prm1', 'stb1') { Initialize-LabNodeEnv $n }
