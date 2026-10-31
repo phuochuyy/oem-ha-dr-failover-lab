@@ -1,12 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Incident rule set for the Data Guard lab, in the format of `emcli export_incident_rule_set` (EM 24.1).
+  Import: emcli import_incident_rule_set -import_file=DG_Lab_Rules.xml -overwrite_existing_ruleset
+          emcli modify_incident_rule -action=enable -type=ruleset -rule_set_name="DG Lab Rules"
+  Each <EventClassSpecificAttributeGroup> is one "specific metric alert" (or availability state) as selected
+  in the console; <EventClass> is the rule's event Type. Inside a group, class-specific attribute names are
+  written "<attribute>|<event class>" (e.g. metric_group|metric_alert); sys_target_type stays plain.
+  Without <EventClass> the console cannot edit the rule (Type greyed out, "please select type").
+-->
 <RuleSet xmlns="http://www.oracle.com/EnterpriseManager/Incident/Rules" isEnabled="true" isGlobalCompressionEnabled="false" isOOB="false" EMVersion="24.1.0.0.0">
    <RulesetName>DG Lab Rules</RulesetName>
-   <RulesetDescription>Data Guard lab databases: Warning/Critical metric alerts and availability events -> incident + DG_LAB_LOG</RulesetDescription>
+   <RulesetDescription>Data Guard lab: apply/transport lag and Data Guard status alerts, database down -> incident + DG_LAB_LOG</RulesetDescription>
    <TargetSelectionType>SELECTED_EXCLUDED</TargetSelectionType>
    <SourceSelectionType>TARGET</SourceSelectionType>
+
    <Rule isEnabled="true" isGlobalCompressionEnabled="false" ruleType="EVENT">
       <RuleName>DG metric alerts</RuleName>
-      <RuleDescription>Warning/Critical metric alerts (incl. Data Guard apply/transport lag and status) on orcl_prm1/orcl_stb1</RuleDescription>
+      <RuleDescription>Warning/Critical alerts on Data Guard Performance (apply lag, transport lag) and Data Guard Status</RuleDescription>
+      <EventClass>metric_alert</EventClass>
       <AttributeForRule>
          <AttrValue>metric_alert</AttrValue>
          <OperatorCode>EQUAL</OperatorCode>
@@ -20,6 +31,57 @@
          <Type>SYSTEM_ATTRIBUTE</Type>
          <AttrName>sys_severity</AttrName>
       </AttributeForRule>
+      <EventClassSpecificAttributeGroup>
+         <EventClassSpecificAttribute isExcluded="false">
+            <AttrName>sys_target_type</AttrName>
+            <OperatorCode>IN</OperatorCode>
+            <AttrValue>oracle_database</AttrValue>
+         </EventClassSpecificAttribute>
+         <EventClassSpecificAttribute isExcluded="false">
+            <AttrName>metric_group|metric_alert</AttrName>
+            <OperatorCode>EQUAL</OperatorCode>
+            <AttrValue>dataguard_sperf_112</AttrValue>
+         </EventClassSpecificAttribute>
+         <EventClassSpecificAttribute isExcluded="false">
+            <AttrName>metric_column|metric_alert</AttrName>
+            <OperatorCode>EQUAL</OperatorCode>
+            <AttrValue>dg_lag</AttrValue>
+         </EventClassSpecificAttribute>
+      </EventClassSpecificAttributeGroup>
+      <EventClassSpecificAttributeGroup>
+         <EventClassSpecificAttribute isExcluded="false">
+            <AttrName>sys_target_type</AttrName>
+            <OperatorCode>IN</OperatorCode>
+            <AttrValue>oracle_database</AttrValue>
+         </EventClassSpecificAttribute>
+         <EventClassSpecificAttribute isExcluded="false">
+            <AttrName>metric_group|metric_alert</AttrName>
+            <OperatorCode>EQUAL</OperatorCode>
+            <AttrValue>dataguard_sperf_112</AttrValue>
+         </EventClassSpecificAttribute>
+         <EventClassSpecificAttribute isExcluded="false">
+            <AttrName>metric_column|metric_alert</AttrName>
+            <OperatorCode>EQUAL</OperatorCode>
+            <AttrValue>dg_pdl</AttrValue>
+         </EventClassSpecificAttribute>
+      </EventClassSpecificAttributeGroup>
+      <EventClassSpecificAttributeGroup>
+         <EventClassSpecificAttribute isExcluded="false">
+            <AttrName>sys_target_type</AttrName>
+            <OperatorCode>IN</OperatorCode>
+            <AttrValue>oracle_database</AttrValue>
+         </EventClassSpecificAttribute>
+         <EventClassSpecificAttribute isExcluded="false">
+            <AttrName>metric_group|metric_alert</AttrName>
+            <OperatorCode>EQUAL</OperatorCode>
+            <AttrValue>dataguard</AttrValue>
+         </EventClassSpecificAttribute>
+         <EventClassSpecificAttribute isExcluded="false">
+            <AttrName>metric_column|metric_alert</AttrName>
+            <OperatorCode>EQUAL</OperatorCode>
+            <AttrValue>dg_status</AttrValue>
+         </EventClassSpecificAttribute>
+      </EventClassSpecificAttributeGroup>
       <RuleCondAction>
          <ActionTypes>ADVANCED_NOTIFICATION,CREATE_INCIDENT</ActionTypes>
          <IsRepeat>0</IsRepeat>
@@ -34,21 +96,29 @@
          </RuleAdvNotification>
       </RuleCondAction>
    </Rule>
+
    <Rule isEnabled="true" isGlobalCompressionEnabled="false" ruleType="EVENT">
-      <RuleName>DG availability</RuleName>
-      <RuleDescription>Database availability events (down / up) on orcl_prm1/orcl_stb1</RuleDescription>
+      <RuleName>DG target down</RuleName>
+      <RuleDescription>Data Guard database target Down</RuleDescription>
+      <EventClass>target_availability</EventClass>
       <AttributeForRule>
          <AttrValue>target_availability</AttrValue>
          <OperatorCode>EQUAL</OperatorCode>
          <Type>SYSTEM_ATTRIBUTE</Type>
          <AttrName>sys_event_class</AttrName>
       </AttributeForRule>
-      <AttributeForRule>
-         <AttrValue>oracle_database</AttrValue>
-         <OperatorCode>IN</OperatorCode>
-         <Type>SYSTEM_ATTRIBUTE</Type>
-         <AttrName>sys_target_type</AttrName>
-      </AttributeForRule>
+      <EventClassSpecificAttributeGroup>
+         <EventClassSpecificAttribute isExcluded="false">
+            <AttrName>sys_target_type</AttrName>
+            <OperatorCode>IN</OperatorCode>
+            <AttrValue>oracle_database</AttrValue>
+         </EventClassSpecificAttribute>
+         <EventClassSpecificAttribute isExcluded="false">
+            <AttrName>avail_severity|target_availability</AttrName>
+            <OperatorCode>IN</OperatorCode>
+            <AttrValue>25</AttrValue>
+         </EventClassSpecificAttribute>
+      </EventClassSpecificAttributeGroup>
       <RuleCondAction>
          <ActionTypes>ADVANCED_NOTIFICATION,CREATE_INCIDENT</ActionTypes>
          <IsRepeat>0</IsRepeat>
@@ -63,6 +133,7 @@
          </RuleAdvNotification>
       </RuleCondAction>
    </Rule>
+
    <SourceObjectSpecificAttributeGroup>
       <SourceObjectSpecificAttribute>
          <AttrName>sys_target_guid</AttrName>
@@ -72,4 +143,3 @@
       </SourceObjectSpecificAttribute>
    </SourceObjectSpecificAttributeGroup>
 </RuleSet>
-
