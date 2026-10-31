@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RuleSet xmlns="http://www.oracle.com/EnterpriseManager/Incident/Rules" isEnabled="true" isGlobalCompressionEnabled="false" isOOB="false" EMVersion="24.1.0.0.0">
+   <RulesetName>DG Lab Rules</RulesetName>
+   <RulesetDescription>Data Guard lab databases: Warning/Critical metric alerts and availability events -> incident + DG_LAB_LOG</RulesetDescription>
+   <TargetSelectionType>SELECTED_EXCLUDED</TargetSelectionType>
+   <SourceSelectionType>TARGET</SourceSelectionType>
+   <Rule isEnabled="true" isGlobalCompressionEnabled="false" ruleType="EVENT">
+      <RuleName>DG metric alerts</RuleName>
+      <RuleDescription>Warning/Critical metric alerts (incl. Data Guard apply/transport lag and status) on orcl_prm1/orcl_stb1</RuleDescription>
+      <AttributeForRule>
+         <AttrValue>metric_alert</AttrValue>
+         <OperatorCode>EQUAL</OperatorCode>
+         <Type>SYSTEM_ATTRIBUTE</Type>
+         <AttrName>sys_event_class</AttrName>
+      </AttributeForRule>
+      <AttributeForRule>
+         <AttrValue>20</AttrValue>
+         <AttrValue>25</AttrValue>
+         <OperatorCode>IN</OperatorCode>
+         <Type>SYSTEM_ATTRIBUTE</Type>
+         <AttrName>sys_severity</AttrName>
+      </AttributeForRule>
+      <RuleCondAction>
+         <ActionTypes>ADVANCED_NOTIFICATION,CREATE_INCIDENT</ActionTypes>
+         <IsRepeat>0</IsRepeat>
+         <RepeatFreq>0</RepeatFreq>
+         <RepeatCount>0</RepeatCount>
+         <IsDuration>0</IsDuration>
+         <Duration>0</Duration>
+         <DurationUnit>1</DurationUnit>
+         <RuleAdvNotification>
+            <AppliedTo>EVENT</AppliedTo>
+            <DeviceName>DG_LAB_LOG:OSCOMMAND</DeviceName>
+         </RuleAdvNotification>
+      </RuleCondAction>
+   </Rule>
+   <Rule isEnabled="true" isGlobalCompressionEnabled="false" ruleType="EVENT">
+      <RuleName>DG availability</RuleName>
+      <RuleDescription>Database availability events (down / up) on orcl_prm1/orcl_stb1</RuleDescription>
+      <AttributeForRule>
+         <AttrValue>target_availability</AttrValue>
+         <OperatorCode>EQUAL</OperatorCode>
+         <Type>SYSTEM_ATTRIBUTE</Type>
+         <AttrName>sys_event_class</AttrName>
+      </AttributeForRule>
+      <AttributeForRule>
+         <AttrValue>oracle_database</AttrValue>
+         <OperatorCode>IN</OperatorCode>
+         <Type>SYSTEM_ATTRIBUTE</Type>
+         <AttrName>sys_target_type</AttrName>
+      </AttributeForRule>
+      <RuleCondAction>
+         <ActionTypes>ADVANCED_NOTIFICATION,CREATE_INCIDENT</ActionTypes>
+         <IsRepeat>0</IsRepeat>
+         <RepeatFreq>0</RepeatFreq>
+         <RepeatCount>0</RepeatCount>
+         <IsDuration>0</IsDuration>
+         <Duration>0</Duration>
+         <DurationUnit>1</DurationUnit>
+         <RuleAdvNotification>
+            <AppliedTo>EVENT</AppliedTo>
+            <DeviceName>DG_LAB_LOG:OSCOMMAND</DeviceName>
+         </RuleAdvNotification>
+      </RuleCondAction>
+   </Rule>
+   <SourceObjectSpecificAttributeGroup>
+      <SourceObjectSpecificAttribute>
+         <AttrName>sys_target_guid</AttrName>
+         <OperatorCode>IN</OperatorCode>
+         <AttrValue>orcl_prm1|oracle_database</AttrValue>
+         <AttrValue>orcl_stb1|oracle_database</AttrValue>
+      </SourceObjectSpecificAttribute>
+   </SourceObjectSpecificAttributeGroup>
+</RuleSet>
+

@@ -94,6 +94,21 @@ DGMGRL> edit database stb1 set property DbDisplayName='orcl_stb1';
 
 Giá trị phải **trùng tên target database trong EM**.
 
+## EM: incident rule set tạo ngoài giao diện không chạy
+
+- Rule set tạo bằng API PL/SQL của repository (`EM_INCIDENT_RULES`) không khớp event: thiếu phần biên dịch của
+  tầng Java, dễ thành loại *Personal*, và điều kiện lưu khác với giao diện. **Đừng dùng cách này.**
+- Cách chuẩn: tạo rule set trên giao diện → `emcli export_incident_rule_set` → lưu XML →
+  `emcli import_incident_rule_set` (+ `modify_incident_rule -action=enable`).
+- Rule set mới import vào ở trạng thái disabled; emcli nhắc *"Review it and enable before saving"*. Trong lab, rule set
+  import rồi enable bằng emcli vẫn chưa khớp event; xem bước lưu trên giao diện trong [em-alerting.md](em-alerting.md).
+- `-overwrite_existing_ruleset` lên một rule set lỗi báo `JBO-25028 ... Overflow Exception`: xóa rule set đó trước.
+
+## EM: truy vấn incident/event "không thấy gì"
+
+`MGMT$INCIDENTS` và `MGMT$EVENTS` lưu giờ **UTC**. Lọc bằng `sysdate - x` (giờ +07) sẽ loại bỏ dữ liệu mới.
+Dùng `cast(sys_extract_utc(systimestamp) as date) - x`.
+
 ## PowerShell 5.1 → ssh
 
 - Dấu `"` trong tham số truyền cho `ssh.exe` bị PowerShell 5.1 nuốt mất, ví dụ `"_allow_insert_with_update_check"`

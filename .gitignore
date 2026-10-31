@@ -1,6 +1,9 @@
 # Real lab configuration (passwords) - never commit
 config/lab.env
 
+# Local-only notes (personal journal, investigations)
+notes/
+
 # Installers, ISOs, VM disks, generated files
 *.iso
 *.zip
