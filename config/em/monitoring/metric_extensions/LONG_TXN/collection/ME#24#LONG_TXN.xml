@@ -1,0 +1,9 @@
+<TargetCollectionExt EXT_NAME="ME$LONG_TXN" EXT_VERSION="1" TARGET_TYPE="oracle_database"><CollectionItem NAME="ME$LONG_TXN" UPLOAD="YES">
+	<Schedule>
+		<IntervalSchedule INTERVAL="5" TIME_UNIT="Min"/>
+	</Schedule>
+	<MetricColl NAME="ME$LONG_TXN">
+		<Condition COLUMN_NAME="OLDEST_TXN_MINUTES" CRITICAL="60" WARNING="30" OPERATOR="GT" OCCURRENCES="1" MESSAGE="The value of %columnName% is %value%" MESSAGE_NLSID="EMAGENT_DEFAULT_MESSAGE" CLEAR_MESSAGE="Alert for %columnName% is cleared" CLEAR_MESSAGE_NLSID="EMAGENT_DEFAULT_NO_ROW_CLEAR_MESSAGE"/>
+	</MetricColl>
+</CollectionItem>
+</TargetCollectionExt>

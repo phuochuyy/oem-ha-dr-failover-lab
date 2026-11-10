@@ -98,4 +98,12 @@ function Wait-LabVMState {
 
 function Write-LabStep { param([string]$Text) Write-Host "`n== $Text" -ForegroundColor Cyan }
 
+# VM disks and the pagefile share C:, and VDI files only grow. Stop before the host runs out of space.
+function Assert-LabDisk {
+    param([double]$MinFreeGB = 5)
+    $free = (Get-PSDrive C).Free / 1GB
+    if ($free -lt $MinFreeGB) { throw ('C: has {0:N1} GB free, below the {1} GB limit' -f $free, $MinFreeGB) }
+    'C: free {0:N1} GB' -f $free
+}
+
 Export-ModuleMember -Function * -Variable LabNodes, RepoRoot

@@ -1,0 +1,34 @@
+<TargetMetadataExt EXT_NAME="ME$BACKUP_AGE" EXT_VERSION="1" TARGET_TYPE="oracle_database"><Metric NAME="ME$BACKUP_AGE" TYPE="TABLE">
+<Display>
+<Label NLSID="NLS_METRIC_oracle_databaseME$BACKUP_AGE">Backup Age</Label>
+<Description NLSID="NLS_DESCRIPTION_oracle_databaseME$BACKUP_AGE"> </Description>
+</Display>
+<TableDescriptor>
+<ColumnDescriptor NAME="BACKUP_AGE_HOURS" TYPE="NUMBER">
+<Display>
+<Label NLSID="NLS_COLUMN_oracle_databaseME$BACKUP_AGEBACKUP_AGE_HOURS">Backup Age (hours)</Label>
+<Unit NLSID="EM_SYS_STANDARD_TIME_HOURS">HOURS</Unit>
+<UnitCategory>TIME</UnitCategory>
+</Display>
+<CategoryValue CLASS="Default" CATEGORY_NAME="Availability">
+</CategoryValue>
+</ColumnDescriptor>
+</TableDescriptor>
+<QueryDescriptor FETCHLET_ID="SQL">
+<Property NAME="STATEMENT" SCOPE="GLOBAL" OPTIONAL="TRUE">select round(nvl(sysdate - max(j.end_time), 365) * 24, 1) as backup_age_hours
+from v$rman_backup_job_details j
+right join v$database d on j.status like 'COMPLETED%' and j.input_type in ('DB FULL', 'DB INCR')
+where d.database_role = 'PRIMARY'
+group by d.dbid</Property>
+<Property NAME="MachineName" SCOPE="INSTANCE" OPTIONAL="TRUE">MachineName</Property>
+<Property NAME="Port" SCOPE="INSTANCE" OPTIONAL="TRUE">Port</Property>
+<Property NAME="SID" SCOPE="INSTANCE" OPTIONAL="TRUE">SID</Property>
+<Property NAME="ServiceName" SCOPE="INSTANCE" OPTIONAL="TRUE">ServiceName</Property>
+<Property NAME="ConnectDescriptor" SCOPE="INSTANCE" OPTIONAL="TRUE">AgentPreferredConnectString</Property>
+<Property NAME="UserName" SCOPE="INSTANCE" OPTIONAL="TRUE">UserName</Property>
+<Property NAME="password" SCOPE="INSTANCE" OPTIONAL="TRUE">password</Property>
+<Property NAME="Role" SCOPE="INSTANCE" OPTIONAL="TRUE">Role</Property>
+<CredentialRef NAME="SQLCreds"></CredentialRef>
+</QueryDescriptor>
+</Metric>
+</TargetMetadataExt>

@@ -1,0 +1,33 @@
+<TargetMetadataExt EXT_NAME="ME$LONG_TXN" EXT_VERSION="1" TARGET_TYPE="oracle_database"><Metric NAME="ME$LONG_TXN" TYPE="TABLE">
+<Display>
+<Label NLSID="NLS_METRIC_oracle_databaseME$LONG_TXN">Long Transaction</Label>
+<Description NLSID="NLS_DESCRIPTION_oracle_databaseME$LONG_TXN"> </Description>
+</Display>
+<TableDescriptor>
+<ColumnDescriptor NAME="OLDEST_TXN_MINUTES" TYPE="NUMBER">
+<Display>
+<Label NLSID="NLS_COLUMN_oracle_databaseME$LONG_TXNOLDEST_TXN_MINUTES">Oldest Transaction (minutes)</Label>
+<Unit NLSID="EM_SYS_STANDARD_TIME_MINS">MINUTES</Unit>
+<UnitCategory>TIME</UnitCategory>
+</Display>
+<CategoryValue CLASS="Default" CATEGORY_NAME="Availability">
+</CategoryValue>
+</ColumnDescriptor>
+</TableDescriptor>
+<QueryDescriptor FETCHLET_ID="SQL">
+<Property NAME="STATEMENT" SCOPE="GLOBAL" OPTIONAL="TRUE">select round(nvl(max((sysdate - t.start_date) * 1440), 0), 1) as oldest_txn_minutes
+from v$database d left join v$transaction t on 1 = 1
+where d.database_role = 'PRIMARY'
+group by d.dbid</Property>
+<Property NAME="MachineName" SCOPE="INSTANCE" OPTIONAL="TRUE">MachineName</Property>
+<Property NAME="Port" SCOPE="INSTANCE" OPTIONAL="TRUE">Port</Property>
+<Property NAME="SID" SCOPE="INSTANCE" OPTIONAL="TRUE">SID</Property>
+<Property NAME="ServiceName" SCOPE="INSTANCE" OPTIONAL="TRUE">ServiceName</Property>
+<Property NAME="ConnectDescriptor" SCOPE="INSTANCE" OPTIONAL="TRUE">AgentPreferredConnectString</Property>
+<Property NAME="UserName" SCOPE="INSTANCE" OPTIONAL="TRUE">UserName</Property>
+<Property NAME="password" SCOPE="INSTANCE" OPTIONAL="TRUE">password</Property>
+<Property NAME="Role" SCOPE="INSTANCE" OPTIONAL="TRUE">Role</Property>
+<CredentialRef NAME="SQLCreds"></CredentialRef>
+</QueryDescriptor>
+</Metric>
+</TargetMetadataExt>

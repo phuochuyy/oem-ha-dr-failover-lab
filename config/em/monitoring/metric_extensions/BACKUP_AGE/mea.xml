@@ -1,0 +1,4 @@
+<MetricExtensionArchive name="MEAME$BACKUP_AGE">
+<MetricExtension name="ME$BACKUP_AGE" type="oracle_database" version="1" is_repos="FALSE" display_name="Backup Age" description=" " version_comment=" " metadata_digest="a79b56c9c9133a718b9263015f43372e" coll_digest="7caf41efd383811611f5c58747da5dc3" attach_digest="d41d8cd98f00b204e9800998ecf8427e">
+</MetricExtension>
+</MetricExtensionArchive>

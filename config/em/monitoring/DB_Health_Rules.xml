@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Incident rule set for database health metrics. Same format and severity codes as ../DG_Lab_Rules.xml. -->
+<RuleSet xmlns="http://www.oracle.com/EnterpriseManager/Incident/Rules" isEnabled="true" isGlobalCompressionEnabled="false" isOOB="false" EMVersion="24.1.0.0.0">
+   <RulesetName>DB Health Rules</RulesetName>
+   <RulesetDescription>Backup age, long transactions and FRA usage alerts -> incident + DG_LAB_LOG</RulesetDescription>
+   <TargetSelectionType>SELECTED_EXCLUDED</TargetSelectionType>
+   <SourceSelectionType>TARGET</SourceSelectionType>
+
+   <Rule isEnabled="true" isGlobalCompressionEnabled="false" ruleType="EVENT">
+      <RuleName>DB health alerts</RuleName>
+      <RuleDescription>Warning/Critical alerts on backup age, oldest transaction and non-reclaimable FRA usage</RuleDescription>
+      <EventClass>metric_alert</EventClass>
+      <AttributeForRule>
+         <AttrValue>metric_alert</AttrValue>
+         <OperatorCode>EQUAL</OperatorCode>
+         <Type>SYSTEM_ATTRIBUTE</Type>
+         <AttrName>sys_event_class</AttrName>
+      </AttributeForRule>
+      <AttributeForRule>
+         <AttrValue>8</AttrValue>
+         <AttrValue>16</AttrValue>
+         <OperatorCode>IN</OperatorCode>
+         <Type>SYSTEM_ATTRIBUTE</Type>
+         <AttrName>sys_severity</AttrName>
+      </AttributeForRule>
+      <EventClassSpecificAttributeGroup>
+         <EventClassSpecificAttribute isExcluded="false">
+            <AttrName>sys_target_type</AttrName>
+            <OperatorCode>IN</OperatorCode>
+            <AttrValue>oracle_database</AttrValue>
+         </EventClassSpecificAttribute>
+         <EventClassSpecificAttribute isExcluded="false">
+            <AttrName>metric_group|metric_alert</AttrName>
+            <OperatorCode>EQUAL</OperatorCode>
+            <AttrValue>ME$BACKUP_AGE</AttrValue>
+         </EventClassSpecificAttribute>
+         <EventClassSpecificAttribute isExcluded="false">
+            <AttrName>metric_column|metric_alert</AttrName>
+            <OperatorCode>EQUAL</OperatorCode>
+            <AttrValue>BACKUP_AGE_HOURS</AttrValue>
+         </EventClassSpecificAttribute>
+      </EventClassSpecificAttributeGroup>
+      <EventClassSpecificAttributeGroup>
+         <EventClassSpecificAttribute isExcluded="false">
+            <AttrName>sys_target_type</AttrName>
+            <OperatorCode>IN</OperatorCode>
+            <AttrValue>oracle_database</AttrValue>
+         </EventClassSpecificAttribute>
+         <EventClassSpecificAttribute isExcluded="false">
+            <AttrName>metric_group|metric_alert</AttrName>
+            <OperatorCode>EQUAL</OperatorCode>
+            <AttrValue>ME$LONG_TXN</AttrValue>
+         </EventClassSpecificAttribute>
+         <EventClassSpecificAttribute isExcluded="false">
+            <AttrName>metric_column|metric_alert</AttrName>
+            <OperatorCode>EQUAL</OperatorCode>
+            <AttrValue>OLDEST_TXN_MINUTES</AttrValue>
+         </EventClassSpecificAttribute>
+      </EventClassSpecificAttributeGroup>
+      <EventClassSpecificAttributeGroup>
+         <EventClassSpecificAttribute isExcluded="false">
+            <AttrName>sys_target_type</AttrName>
+            <OperatorCode>IN</OperatorCode>
+            <AttrValue>oracle_database</AttrValue>
+         </EventClassSpecificAttribute>
+         <EventClassSpecificAttribute isExcluded="false">
+            <AttrName>metric_group|metric_alert</AttrName>
+            <OperatorCode>EQUAL</OperatorCode>
+            <AttrValue>Recovery_Area</AttrValue>
+         </EventClassSpecificAttribute>
+         <EventClassSpecificAttribute isExcluded="false">
+            <AttrName>metric_column|metric_alert</AttrName>
+            <OperatorCode>EQUAL</OperatorCode>
+            <AttrValue>Free_Space</AttrValue>
+         </EventClassSpecificAttribute>
+      </EventClassSpecificAttributeGroup>
+      <RuleCondAction>
+         <ActionTypes>ADVANCED_NOTIFICATION,CREATE_INCIDENT</ActionTypes>
+         <IsRepeat>0</IsRepeat>
+         <RepeatFreq>0</RepeatFreq>
+         <RepeatCount>0</RepeatCount>
+         <IsDuration>0</IsDuration>
+         <Duration>0</Duration>
+         <DurationUnit>1</DurationUnit>
+         <RuleAdvNotification>
+            <AppliedTo>EVENT</AppliedTo>
+            <DeviceName>DG_LAB_LOG:OSCOMMAND</DeviceName>
+         </RuleAdvNotification>
+      </RuleCondAction>
+   </Rule>
+
+   <Rule isEnabled="true" isGlobalCompressionEnabled="false" ruleType="EVENT">
+      <RuleName>FRA relief</RuleName>
+      <RuleDescription>FRA usage alert -> submit the fra_relief.sh job on the host of the database</RuleDescription>
+      <EventClass>metric_alert</EventClass>
+      <AttributeForRule>
+         <AttrValue>metric_alert</AttrValue>
+         <OperatorCode>EQUAL</OperatorCode>
+         <Type>SYSTEM_ATTRIBUTE</Type>
+         <AttrName>sys_event_class</AttrName>
+      </AttributeForRule>
+      <AttributeForRule>
+         <AttrValue>8</AttrValue>
+         <AttrValue>16</AttrValue>
+         <OperatorCode>IN</OperatorCode>
+         <Type>SYSTEM_ATTRIBUTE</Type>
+         <AttrName>sys_severity</AttrName>
+      </AttributeForRule>
+      <EventClassSpecificAttributeGroup>
+         <EventClassSpecificAttribute isExcluded="false">
+            <AttrName>sys_target_type</AttrName>
+            <OperatorCode>IN</OperatorCode>
+            <AttrValue>oracle_database</AttrValue>
+         </EventClassSpecificAttribute>
+         <EventClassSpecificAttribute isExcluded="false">
+            <AttrName>metric_group|metric_alert</AttrName>
+            <OperatorCode>EQUAL</OperatorCode>
+            <AttrValue>Recovery_Area</AttrValue>
+         </EventClassSpecificAttribute>
+         <EventClassSpecificAttribute isExcluded="false">
+            <AttrName>metric_column|metric_alert</AttrName>
+            <OperatorCode>EQUAL</OperatorCode>
+            <AttrValue>Free_Space</AttrValue>
+         </EventClassSpecificAttribute>
+      </EventClassSpecificAttributeGroup>
+      <RuleCondAction>
+         <ActionTypes>ADVANCED_NOTIFICATION</ActionTypes>
+         <IsRepeat>0</IsRepeat>
+         <RepeatFreq>0</RepeatFreq>
+         <RepeatCount>0</RepeatCount>
+         <IsDuration>0</IsDuration>
+         <Duration>0</Duration>
+         <DurationUnit>1</DurationUnit>
+         <RuleAdvNotification>
+            <AppliedTo>EVENT</AppliedTo>
+            <DeviceName>FRA_RELIEF_DISPATCH:OSCOMMAND</DeviceName>
+         </RuleAdvNotification>
+      </RuleCondAction>
+   </Rule>
+   <SourceObjectSpecificAttributeGroup>
+      <SourceObjectSpecificAttribute>
+         <AttrName>sys_target_guid</AttrName>
+         <OperatorCode>IN</OperatorCode>
+         <AttrValue>orcl_prm1|oracle_database</AttrValue>
+         <AttrValue>orcl_stb1|oracle_database</AttrValue>
+      </SourceObjectSpecificAttribute>
+   </SourceObjectSpecificAttributeGroup>
+</RuleSet>
